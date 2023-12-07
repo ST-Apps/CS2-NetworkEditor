@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Title>Network Editor</Title>
+		<Authors>ST-Apps</Authors>
+		<Copyright>Copyright © 2023 ST-Apps (github.com/ST-Apps). All rights reserved.</Copyright>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<AssemblyName>NetworkEditor</AssemblyName>
+		<Description>A mod that allows you to tweak values for your networks (edges and nodes).</Description>
+		<Product>$(Title)</Product>
+		<Version>0.0.1</Version>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>latest</LangVersion>
+		<RestoreAdditionalProjectSources>
+			https://api.nuget.org/v3/index.json;
+			https://nuget.bepinex.dev/v3/index.json;
+			https://nuget.samboy.dev/v3/index.json
+		</RestoreAdditionalProjectSources>
+		<RootNamespace>NetworkEditor</RootNamespace>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<Import Project="Config/Postbuild.csproj" />
+	<Import Project="Config/Targets.csproj" />
+	<Import Project="Config/References.csproj" />
+	<Import Project="BepInEx/BepInEx.csproj" />
+	<ItemGroup>
+		<AdditionalFiles Include="stylecop.json" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="Config/PostBuild.csproj" />
+		<None Include="Config/References.csproj" />
+		<None Include="Config/Targets.csproj" />
+		<None Include="BepInEx/BepInEx.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+</Project>
