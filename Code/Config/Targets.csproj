@@ -1,4 +1,10 @@
 <Project>
+	<Target Name="BuildUI" BeforeTargets="PreBuildEvent">
+		<Message Text="Building UI" Importance="high"/>
+		<Exec Command="cd ..\UI &amp; bash -c 'npm run install-dependencies'" />
+		<Exec Command="cd ..\UI &amp; bash -c 'npm run build'" />
+	</Target>
+	
 	<Target Name="CheckManagedDLLPath" BeforeTargets="PreBuildEvent">
 		<Message Text="$(CommonLocation)\General.targets" Importance="high"/>
 		<Error Condition="!Exists('$(ManagedDLLPath)')" Text="The Managed DLL path is wrong: $(ManagedDLLPath)" />

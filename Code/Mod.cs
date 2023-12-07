@@ -49,6 +49,7 @@ namespace NetworkEditor
 
             // Activate systems.
             updateSystem.UpdateAt<NetworkEditorSystem>(SystemUpdatePhase.ToolUpdate);
+            updateSystem.UpdateAt<NetworkEditorUISystem>(SystemUpdatePhase.UIUpdate);
         }
 
         /// <summary>

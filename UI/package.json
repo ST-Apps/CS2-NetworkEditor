@@ -1,0 +1,21 @@
+{
+  "name": "networkeditor.ui",
+  "version": "0.0.1",
+  "description": "NetworkEditor.UI",
+  "devDependencies": {
+    "esbuild": "^0.19.8",
+    "eslint": "^8.21.0",
+    "fs-extra": "^11.2.0",
+    "gulp": "^4.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "eslintConfig": {},
+  "dependencies": {
+    "hookui-framework": "github:captain-of-coit/hookui-framework"
+  },
+  "scripts": {
+    "install-dependencies": "npm install",
+    "build": "gulp build-jsx"
+  }
+}

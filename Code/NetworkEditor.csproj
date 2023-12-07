@@ -24,7 +24,13 @@
 	<Import Project="Config/References.csproj" />
 	<Import Project="BepInEx/BepInEx.csproj" />
 	<ItemGroup>
+	  <None Remove="Resources\ui.js" />
+	</ItemGroup>
+	<ItemGroup>
 		<AdditionalFiles Include="stylecop.json" />
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Include="Resources\ui.js" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="Config/PostBuild.csproj" />

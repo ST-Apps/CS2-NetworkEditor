@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetworkEditor", "NetworkEditor.csproj", "{50FA12C1-2DF1-470E-924C-73CB323FB550}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetworkEditor", "Code\NetworkEditor.csproj", "{50FA12C1-2DF1-470E-924C-73CB323FB550}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8706BD65-65C8-4B0A-A52F-9C1BB2C97589} = {8706BD65-65C8-4B0A-A52F-9C1BB2C97589}
+	EndProjectSection
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "networkeditor.ui", "UI\networkeditor.ui.esproj", "{8706BD65-65C8-4B0A-A52F-9C1BB2C97589}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,12 @@ Global
 		{50FA12C1-2DF1-470E-924C-73CB323FB550}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50FA12C1-2DF1-470E-924C-73CB323FB550}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{50FA12C1-2DF1-470E-924C-73CB323FB550}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8706BD65-65C8-4B0A-A52F-9C1BB2C97589}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8706BD65-65C8-4B0A-A52F-9C1BB2C97589}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8706BD65-65C8-4B0A-A52F-9C1BB2C97589}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{8706BD65-65C8-4B0A-A52F-9C1BB2C97589}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8706BD65-65C8-4B0A-A52F-9C1BB2C97589}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8706BD65-65C8-4B0A-A52F-9C1BB2C97589}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

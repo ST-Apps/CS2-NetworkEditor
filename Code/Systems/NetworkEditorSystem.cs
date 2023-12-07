@@ -9,11 +9,13 @@
     using Game.Rendering;
     using Game.Tools;
     using NetworkEditor.Code.Extensions;
+    using NetworkEditor.Models;
     using Unity.Entities;
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEngine;
     using UnityEngine.InputSystem;
+    using UnityEngine.Rendering;
     using InputAction = UnityEngine.InputSystem.InputAction;
     using Node = Game.Net.Node;
 
@@ -28,7 +30,6 @@
 
         // Raycast.
         private ControlPoint _raycastPoint;
-        private float3 _previousPos;
         private Entity _selectedEdgeEntity = Entity.Null;
 
         // References.
@@ -43,6 +44,7 @@
 
         // Tool settings.
         private bool _isApplying;
+        private bool _isDirty;
 
         /// <summary>
         /// Gets the tool's ID string.
@@ -50,13 +52,14 @@
         public override string toolID => "Network Editor";
 
         /// <summary>
-        /// Gets or sets the previously used <see cref="ToolBaseSystem"/>, needed to restore it when disabling this mod.
+        /// Gets a value indicating whether gets there is a currently selected <see cref="Edge"/> <see cref="Entity"/>.
         /// </summary>
-        private ToolBaseSystem PreviousActiveTool
-        {
-            get => _previousActiveTool;
-            set { _previousActiveTool = value; }
-        }
+        public bool HasSelectedEdgeEntity => _selectedEdgeEntity != Entity.Null;
+
+        /// <summary>
+        /// Gets the <see cref="EdgeDataUIModel"/> for the currently selected <see cref="Edge"/> <see cref="Entity"/>.
+        /// </summary>
+        internal EdgeDataUIModel SelectedEntityDataUIModel { get; private set; }
 
         /// <summary>
         /// Called when the raycast is initialized.
@@ -68,19 +71,6 @@
             m_ToolRaycastSystem.typeMask = TypeMask.Net;
             m_ToolRaycastSystem.netLayerMask = Layer.Road;
             m_ToolRaycastSystem.collisionMask = CollisionMask.OnGround | CollisionMask.Overground;
-
-            //m_ToolRaycastSystem.raycastFlags |= RaycastFlags.SubElements;
-
-            //if (m_ToolSystem.actionMode.IsEditor())
-            //{
-            //    m_ToolRaycastSystem.raycastFlags |= RaycastFlags.Markers | RaycastFlags.UpgradeIsMain | RaycastFlags.EditorContainers;
-            //    m_ToolRaycastSystem.typeMask |= TypeMask.Areas;
-            //    m_ToolRaycastSystem.areaTypeMask = AreaTypeMask.Lots | AreaTypeMask.Spaces | AreaTypeMask.Surfaces;
-            //}
-
-            //m_ToolRaycastSystem.typeMask |= TypeMask.MovingObjects;
-
-            //m_ToolRaycastSystem.raycastFlags |= RaycastFlags.Placeholders | RaycastFlags.Decals;
         }
 
         /// <summary>
@@ -97,6 +87,18 @@
         public override bool TrySetPrefab(PrefabBase prefab)
         {
             return false;
+        }
+
+        /// <summary>
+        /// Updates <see cref="_selectedEdgeEntity"/> with the new data received as <see cref="EdgeDataUIModel"/>.
+        /// </summary>
+        /// <param name="updatedEdgeData"></param>
+        internal void UpdateSelectedEdge(EdgeDataUIModel updatedEdgeData)
+        {
+            SelectedEntityDataUIModel = updatedEdgeData;
+            _isDirty = true;
+
+            _log.Debug($"Updated Edge with {SelectedEntityDataUIModel.ToJSONString()}");
         }
 
         /// <summary>
@@ -144,9 +146,35 @@
                 SetHighlight(_raycastPoint, false);
                 _raycastPoint = default;
                 _selectedEdgeEntity = Entity.Null;
+                SelectedEntityDataUIModel = new EdgeDataUIModel();
                 _isApplying = false;
 
                 return inputDeps;
+            }
+
+            // Checks if there is dirty data to update.
+            if (_isDirty)
+            {
+                // Checks if the selected object has all the needed components.
+                if (_edgeDataLookup.TryGetComponent(SelectedEntityDataUIModel.Edge, out var edge) &&
+                    _compositionDataLookup.TryGetComponent(SelectedEntityDataUIModel.Edge, out var composition) &&
+                    _netCompositionDataLookup.TryGetComponent(composition.m_Edge, out var edgeComposition) &&
+                    _netCompositionDataLookup.TryGetComponent(composition.m_StartNode, out var startNodeComposition) &&
+                    _netCompositionDataLookup.TryGetComponent(composition.m_EndNode, out var endNodeComposition))
+                {
+                    // Creates the CommandBuffer that will execute updates.
+                    var commandBuffer = _toolOutputBarrier.CreateCommandBuffer();
+
+                    // Creates and sets the new CompositionFlags for the Edge.
+                    edgeComposition.m_Flags = new CompositionFlags
+                    {
+                        m_General = SelectedEntityDataUIModel.General,
+                        m_Left = SelectedEntityDataUIModel.Left,
+                        m_Right = SelectedEntityDataUIModel.Right,
+                    };
+                    commandBuffer.SetComponent(composition.m_Edge, edgeComposition);
+                    commandBuffer.AddComponent<Updated>(SelectedEntityDataUIModel.Edge);
+                }
             }
 
             // Checks if we're currently applying.
@@ -177,15 +205,23 @@
                 {
                     _isApplying = true;
                     _selectedEdgeEntity = controlPoint.m_OriginalEntity;
+                    SelectedEntityDataUIModel = EdgeDataUIModel.FromEntity(
+                        _selectedEdgeEntity,
+                        _edgeDataLookup,
+                        _compositionDataLookup,
+                        _netCompositionDataLookup);
 
                     _log.Info($"Selected edge: {_selectedEdgeEntity.ToJSONString()}");
+                    _log.Info($"Selected model: {SelectedEntityDataUIModel.ToJSONString()}");
                 }
             }
             else
             {
                 // Resets tool status as Raycast didn't hit anything.
                 SetHighlight(_raycastPoint, false);
+                _raycastPoint = default;
                 _selectedEdgeEntity = Entity.Null;
+                SelectedEntityDataUIModel = new EdgeDataUIModel();
                 _isApplying = false;
             }
 
