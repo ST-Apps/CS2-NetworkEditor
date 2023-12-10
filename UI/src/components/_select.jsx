@@ -1,11 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
+import { $Field } from 'hookui-framework'
 
-const $Select = ({ react, style, onSelectionChanged, selected, options }) => {
+const $Select = ({ react, style, onToggle, section, options }) => {
     const [active, setActive] = react.useState(false);
     const [portalContainer, setPortalContainer] = react.useState(null);
-    const pickerRef = react.useRef(null); // Ref to attach to the select field
-    const dropdownRef = react.useRef(null); // Ref for the dropdown content
+    const pickerRef = react.useRef(null);
+    const dropdownRef = react.useRef(null);
 
     // Function to check if the click is outside the dropdown
     const handleClickOutside = (event) => {
@@ -56,39 +57,52 @@ const $Select = ({ react, style, onSelectionChanged, selected, options }) => {
         return {};
     };
 
-    const onToggle = () => {
-        setActive(!active);
-    };
-
-    const selectedIndex = options.indexOf(selected);
-
-    // Define the dropdown content
     const dropdownContent = active ? (
         <div ref={dropdownRef} style={{
             display: 'flex',
             position: 'absolute',
             ...getDropdownPosition(),
-            zIndex: 9999
+            zIndex: 9999,
         }}>
-            <div className="dropdown-popup_mMv" style={{ maxWidth: 'inherit', 'width': '100%' }}>
-                <div className="dropdown-menu_jf2 dropdown-menu_Swd">
-                    {
-                        options.map((option) => (
-                            <button key={option} className="dropdown-item_sZT selected" style={{ padding: '5rem', height: 'auto' }} onClick={() => onSelectionChanged(option)}>{option}</button>
-                        ))
-                    }
+            <div className="dropdown-popup_mMv"
+                style={{
+                    maxWidth: 'inherit',
+                    width: '100%',
+                    maxHeight: '300px', // Set a maximum height
+                    overflowY: 'auto' // Enable vertical scrolling
+                }}>
+                <div className="dropdown-menu_jf2 dropdown-menu_Swd"
+                    style={{
+                        maxWidth: 'inherit',
+                        width: '100%',
+                        maxHeight: '300px', // Set a maximum height
+                        overflowY: 'auto' // Enable vertical scrolling
+                    }}>
+                    {Object.keys(options).map((option, index) => (
+                        <div key={option} className="dropdown-item_sZT" style={{ padding: '5rem', height: 'auto' }}>
+                            <$Field key={index}
+                                react={react}
+                                label={option}
+                                checked={options[option]}
+                                onToggle={onToggle(section, option)} />
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
     ) : null;
 
-    return (<div style={{ width: '100%' }}>
-        <div ref={pickerRef} className="dropdown-toggle_V9z dropdown-toggle_prl value-field_yJi value_PW_ dropdown_pJu item-states_QjV" onClick={onToggle} style={{ padding: '5rem', height: 'auto', ...style }}>
-            <div className="label_l_4">{options[selectedIndex]}</div>
-            <div className="tinted-icon_iKo indicator_Xmj" style={{ maskImage: 'url(Media/Glyphs/StrokeArrowDown.svg)' }}></div>
-            {portalContainer && dropdownContent && ReactDOM.createPortal(dropdownContent, portalContainer)}
+    const selectedOptionsText = Object.keys(options).filter(key => options[key]).join(', ');
+
+    return (
+        <div style={{ width: '100%' }}>
+            <div ref={pickerRef} className="dropdown-toggle_V9z dropdown-toggle_prl value-field_yJi value_PW_ dropdown_pJu item-states_QjV" onClick={() => setActive(!active)} style={{ padding: '5rem', height: 'auto', ...style }}>
+                <div className="label_l_4">{selectedOptionsText || 'Select options'}</div>
+                <div className="tinted-icon_iKo indicator_Xmj" style={{ maskImage: 'url(Media/Glyphs/StrokeArrowDown.svg)' }}></div>
+                {portalContainer && dropdownContent && ReactDOM.createPortal(dropdownContent, portalContainer)}
+            </div>
         </div>
-    </div>);
+    );
 }
 
-export default $Select
+export default $Select;

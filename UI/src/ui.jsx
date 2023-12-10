@@ -64,12 +64,13 @@ import React from 'react';
 import { useDataUpdate, $Panel, $Field } from 'hookui-framework'
 import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
+import $Select from './components/_select';
 
 const eventsNamespaceKey = "NetworkEditor";
 const eventEdgeUpdatedKey = `${eventsNamespaceKey}.EdgeUpdated`;
 const currentEdgeKey = `${eventsNamespaceKey}.CurrentEdge`;
 
-const $Counter = ({ react }) => {
+const $Editor = ({ react }) => {
     // This sets up the currentControlPoint as local state
     const [data, setData] = react.useState({
         "Edge": {},
@@ -77,6 +78,10 @@ const $Counter = ({ react }) => {
         "Left": {},
         "Right": {}
     });
+
+    //engine.on('TEST_EVENT', (uiEdge) => {
+    //    console.log(uiEdge);
+    //});
 
     const handleCheckboxChange = (section, flag) => (event) => {
         console.log(`Setting data[${section}][${flag}] to ${event}`)
@@ -93,43 +98,30 @@ const $Counter = ({ react }) => {
     }
 
     const renderCheckboxes = (section) => {
-        return Object.keys(data[section]).map((flag) => (
-            <$Field react={react} label={flag} checked={data[section][flag]} onToggle={handleCheckboxChange(section, flag)} />
-        ));
+        return (
+            <$Select react={react}
+                section={section}
+                options={data[section]}
+                style={{ margin: '10rem', flex: '1' }}
+                onToggle={(sec, flag) => handleCheckboxChange(sec, flag)}>
+            </$Select>
+        );
     };
 
     // useDataUpdate binds the result of the GetterValueBinding to currentControlPoint
     useDataUpdate(react, currentEdgeKey, setData)
-    react.useEffect(() => { console.log(data) }, [data]);
 
     return <$Panel react={react} title="Network Editor">
-        <div>{data.Edge.index}</div>
-        {/*<div>*/}
-        {/*    <button className="button_WWa button_SH8">Reset</button>*/}
-        {/*    <button className="button_WWa button_SH8" onClick={() => engine.call('ExtendedRoadUpgrades.ApplyAction')}>Apply</button>*/}
-        {/*</div>*/}
+        <div>Editing Edge: {data.Edge.index}</div>
         <div>
             <h3>General</h3>
             {renderCheckboxes('General')}
-
             <h3>Left</h3>
             {renderCheckboxes('Left')}
-
             <h3>Right</h3>
             {renderCheckboxes('Right')}
         </div>
     </$Panel>
-    // Below, engine.trigger is responsible for triggering the TriggerBinding in the UI System
-    //return <$Panel react={react} title="Vehicle Counter">
-    //    <div className="field_MBO">
-    //        <div className="label_DGc label_ZLb">Active vehicles</div>
-    //        <div>{currentControlPoint}</div>
-    //    </div>
-    //    <div>
-    //        <button className="button_WWa button_SH8">Reset</button>
-    //        <button className="button_WWa button_SH8" onClick={() => engine.call('ExtendedRoadUpgrades.ApplyAction')}>Apply</button>
-    //    </div>
-    //</$Panel>
 }
 
 // Injection Script
@@ -145,4 +137,4 @@ injectionPoint.appendChild(newDiv);
 const root = createRoot(newDiv);
 
 // Use a portal to render the RedSquare inside the new div
-root.render(createPortal(<$Counter react={React} />, newDiv));
+root.render(createPortal(<$Editor react={React} />, newDiv));

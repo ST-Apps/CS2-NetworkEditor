@@ -12,6 +12,7 @@
   },
   "eslintConfig": {},
   "dependencies": {
+    "coherent-gameface-dropdown": "^3.2.0",
     "hookui-framework": "github:captain-of-coit/hookui-framework"
   },
   "scripts": {

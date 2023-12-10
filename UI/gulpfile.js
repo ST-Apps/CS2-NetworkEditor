@@ -1,6 +1,5 @@
 const gulp = require('gulp');
 const esbuild = require('esbuild');
-const fs = require('fs-extra'); // fs-extra is an extended version of Node's fs module
 
 gulp.task('build-jsx', function (done) {
     return esbuild.build({

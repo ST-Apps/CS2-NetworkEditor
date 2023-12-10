@@ -1,20 +1,16 @@
-﻿using cohtml.Net;
-using Colossal.Json;
-using Colossal.Logging;
-using Colossal.UI.Binding;
-using Game.SceneFlow;
-using Game.Tools;
-using Game.UI;
-using NetworkEditor.Models;
-using NetworkEditor.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NetworkEditor
+﻿namespace NetworkEditor
 {
+    using System;
+    using cohtml.Net;
+    using Colossal.Json;
+    using Colossal.Logging;
+    using Colossal.UI.Binding;
+    using Game.SceneFlow;
+    using Game.Tools;
+    using Game.UI;
+    using NetworkEditor.Models;
+    using NetworkEditor.Utils;
+
     /// <summary>
     /// A tool UI system for NetworkEditor.
     /// </summary>
@@ -112,6 +108,36 @@ namespace NetworkEditor
             _log.Debug($"Current Edge updated with new data: {updatedEdgeData.ToJSONString()}");
 
             _networkEditorSystem.UpdateSelectedEdge(updatedEdgeData);
+
+            //_uiView.TriggerEvent("TEST_EVENT", new UIEdge
+            //{
+            //    CompositionFlags = new UICompositionFlags
+            //    {
+            //        General = updatedEdgeData.General.FlagsToDictionary(),
+            //        Left = updatedEdgeData.Left.FlagsToDictionary(),
+            //        Right = updatedEdgeData.Right.FlagsToDictionary(),
+            //    },
+
+            //    StartNode = new UINode
+            //    {
+            //        CompositionFlags = new UICompositionFlags
+            //        {
+            //            General = CompositionFlags.General.Invert.FlagsToDictionary(),
+            //            Left = CompositionFlags.Side.Raised.FlagsToDictionary(),
+            //            Right = CompositionFlags.Side.Raised.FlagsToDictionary(),
+            //        },
+            //    },
+
+            //    EndNode = new UINode
+            //    {
+            //        CompositionFlags = new UICompositionFlags
+            //        {
+            //            General = CompositionFlags.General.Invert.FlagsToDictionary(),
+            //            Left = CompositionFlags.Side.Raised.FlagsToDictionary(),
+            //            Right = CompositionFlags.Side.Raised.FlagsToDictionary(),
+            //        },
+            //    },
+            //});
         }
     }
 }

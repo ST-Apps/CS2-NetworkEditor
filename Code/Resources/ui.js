@@ -2382,9 +2382,9 @@
           if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
             __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
           }
-          var React6 = require_react();
+          var React7 = require_react();
           var Scheduler = require_scheduler();
-          var ReactSharedInternals = React6.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React7.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           var suppressWarning = false;
           function setSuppressWarning(newSuppressWarning) {
             {
@@ -3989,7 +3989,7 @@
             {
               if (props.value == null) {
                 if (typeof props.children === "object" && props.children !== null) {
-                  React6.Children.forEach(props.children, function(child) {
+                  React7.Children.forEach(props.children, function(child) {
                     if (child == null) {
                       return;
                     }
@@ -12436,7 +12436,7 @@
             }
           }
           var fakeInternalInstance = {};
-          var emptyRefsObject = new React6.Component().refs;
+          var emptyRefsObject = new React7.Component().refs;
           var didWarnAboutStateAssignmentForComponent;
           var didWarnAboutUninitializedState;
           var didWarnAboutGetSnapshotBeforeUpdateWithoutDidUpdate;
@@ -23508,7 +23508,7 @@
   });
 
   // src/ui.jsx
-  var import_react5 = __toESM(require_react());
+  var import_react6 = __toESM(require_react());
 
   // node_modules/hookui-framework/src/components/panel.jsx
   var import_react = __toESM(require_react());
@@ -23677,11 +23677,106 @@
 
   // src/ui.jsx
   var import_client = __toESM(require_client());
+  var import_react_dom2 = __toESM(require_react_dom());
+
+  // src/components/_select.jsx
+  var import_react5 = __toESM(require_react());
   var import_react_dom = __toESM(require_react_dom());
+  var $Select = ({ react, style, onToggle, section, options }) => {
+    const [active, setActive] = react.useState(false);
+    const [portalContainer, setPortalContainer] = react.useState(null);
+    const pickerRef = react.useRef(null);
+    const dropdownRef = react.useRef(null);
+    const handleClickOutside = (event) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target) && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActive(false);
+      }
+    };
+    react.useEffect(() => {
+      if (!document.getElementById("select-portal")) {
+        const container = document.createElement("div");
+        container.id = "select-portal";
+        document.body.appendChild(container);
+        setPortalContainer(container);
+      } else {
+        setPortalContainer(document.getElementById("select-portal"));
+      }
+      document.addEventListener("click", handleClickOutside, true);
+      return () => {
+        document.removeEventListener("click", handleClickOutside, true);
+      };
+    }, []);
+    react.useEffect(() => {
+      if (active) {
+        document.addEventListener("click", handleClickOutside, true);
+      } else {
+        document.removeEventListener("click", handleClickOutside, true);
+      }
+    }, [active]);
+    const getDropdownPosition = () => {
+      if (pickerRef.current) {
+        const rect = pickerRef.current.getBoundingClientRect();
+        return {
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width
+        };
+      }
+      return {};
+    };
+    const dropdownContent = active ? /* @__PURE__ */ import_react5.default.createElement("div", { ref: dropdownRef, style: {
+      display: "flex",
+      position: "absolute",
+      ...getDropdownPosition(),
+      zIndex: 9999
+    } }, /* @__PURE__ */ import_react5.default.createElement(
+      "div",
+      {
+        className: "dropdown-popup_mMv",
+        style: {
+          maxWidth: "inherit",
+          width: "100%",
+          maxHeight: "300px",
+          // Set a maximum height
+          overflowY: "auto"
+          // Enable vertical scrolling
+        }
+      },
+      /* @__PURE__ */ import_react5.default.createElement(
+        "div",
+        {
+          className: "dropdown-menu_jf2 dropdown-menu_Swd",
+          style: {
+            maxWidth: "inherit",
+            width: "100%",
+            maxHeight: "300px",
+            // Set a maximum height
+            overflowY: "auto"
+            // Enable vertical scrolling
+          }
+        },
+        Object.keys(options).map((option, index) => /* @__PURE__ */ import_react5.default.createElement("div", { key: option, className: "dropdown-item_sZT", style: { padding: "5rem", height: "auto" } }, /* @__PURE__ */ import_react5.default.createElement(
+          field_default,
+          {
+            key: index,
+            react,
+            label: option,
+            checked: options[option],
+            onToggle: onToggle(section, option)
+          }
+        )))
+      )
+    )) : null;
+    const selectedOptionsText = Object.keys(options).filter((key) => options[key]).join(", ");
+    return /* @__PURE__ */ import_react5.default.createElement("div", { style: { width: "100%" } }, /* @__PURE__ */ import_react5.default.createElement("div", { ref: pickerRef, className: "dropdown-toggle_V9z dropdown-toggle_prl value-field_yJi value_PW_ dropdown_pJu item-states_QjV", onClick: () => setActive(!active), style: { padding: "5rem", height: "auto", ...style } }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "label_l_4" }, selectedOptionsText || "Select options"), /* @__PURE__ */ import_react5.default.createElement("div", { className: "tinted-icon_iKo indicator_Xmj", style: { maskImage: "url(Media/Glyphs/StrokeArrowDown.svg)" } }), portalContainer && dropdownContent && import_react_dom.default.createPortal(dropdownContent, portalContainer)));
+  };
+  var select_default = $Select;
+
+  // src/ui.jsx
   var eventsNamespaceKey = "NetworkEditor";
   var eventEdgeUpdatedKey = `${eventsNamespaceKey}.EdgeUpdated`;
   var currentEdgeKey = `${eventsNamespaceKey}.CurrentEdge`;
-  var $Counter = ({ react }) => {
+  var $Editor = ({ react }) => {
     const [data, setData] = react.useState({
       "Edge": {},
       "General": {},
@@ -23701,13 +23796,19 @@
       });
     };
     const renderCheckboxes = (section) => {
-      return Object.keys(data[section]).map((flag) => /* @__PURE__ */ import_react5.default.createElement(field_default, { react, label: flag, checked: data[section][flag], onToggle: handleCheckboxChange(section, flag) }));
+      return /* @__PURE__ */ import_react6.default.createElement(
+        select_default,
+        {
+          react,
+          section,
+          options: data[section],
+          style: { margin: "10rem", flex: "1" },
+          onToggle: (sec, flag) => handleCheckboxChange(sec, flag)
+        }
+      );
     };
     use_data_update_default(react, currentEdgeKey, setData);
-    react.useEffect(() => {
-      console.log(data);
-    }, [data]);
-    return /* @__PURE__ */ import_react5.default.createElement(panel_default, { react, title: "Network Editor" }, /* @__PURE__ */ import_react5.default.createElement("div", null, data.Edge.index), /* @__PURE__ */ import_react5.default.createElement("div", null, /* @__PURE__ */ import_react5.default.createElement("h3", null, "General"), renderCheckboxes("General"), /* @__PURE__ */ import_react5.default.createElement("h3", null, "Left"), renderCheckboxes("Left"), /* @__PURE__ */ import_react5.default.createElement("h3", null, "Right"), renderCheckboxes("Right")));
+    return /* @__PURE__ */ import_react6.default.createElement(panel_default, { react, title: "Network Editor" }, /* @__PURE__ */ import_react6.default.createElement("div", null, "Editing Edge: ", data.Edge.index), /* @__PURE__ */ import_react6.default.createElement("div", null, /* @__PURE__ */ import_react6.default.createElement("h3", null, "General"), renderCheckboxes("General"), /* @__PURE__ */ import_react6.default.createElement("h3", null, "Left"), renderCheckboxes("Left"), /* @__PURE__ */ import_react6.default.createElement("h3", null, "Right"), renderCheckboxes("Right")));
   };
   var injectionPoint = document.getElementsByClassName("game-main-screen_TRK")[0];
   var newDiv = document.createElement("div");
@@ -23715,7 +23816,7 @@
   newDiv.id = "network-editor-root";
   injectionPoint.appendChild(newDiv);
   var root = (0, import_client.createRoot)(newDiv);
-  root.render((0, import_react_dom.createPortal)(/* @__PURE__ */ import_react5.default.createElement($Counter, { react: import_react5.default }), newDiv));
+  root.render((0, import_react_dom2.createPortal)(/* @__PURE__ */ import_react6.default.createElement($Editor, { react: import_react6.default }), newDiv));
 })();
 /*! Bundled license information:
 
