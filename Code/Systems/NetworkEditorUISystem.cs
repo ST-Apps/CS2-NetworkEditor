@@ -20,7 +20,9 @@
         private static readonly string _jsResourceId = "NetworkEditor.Resources.ui.js";
         private static readonly string _eventsNamespaceKey = "NetworkEditor";
         private static readonly string _eventEdgeUpdatedName = "EdgeUpdated";
+        private static readonly string _eventApplyChangesName = "ApplyChanges";
         private static readonly string _currentEdgeName = "CurrentEdge";
+        private static readonly string _isConfigurationValidName = "ConfigurationValid";
 
         // Cached references.
         private View _uiView;
@@ -53,15 +55,25 @@
             _jsResource = UIFileUtils.ReadJS(_jsResourceId);
 
             // Register event handlers.
-            AddBinding(new TriggerBinding<EdgeDataUIModel>(
+            AddBinding(new TriggerBinding<UINetItem>(
                 _eventsNamespaceKey,
                 _eventEdgeUpdatedName,
-                new Action<EdgeDataUIModel>(OnEdgeUpdated)));
+                new Action<UINetItem>(OnEdgeUpdated)));
+            AddBinding(new TriggerBinding(
+                _eventsNamespaceKey,
+                _eventApplyChangesName,
+                new Action(ApplyChanges)));
+
             AddUpdateBinding(
-                new GetterValueBinding<EdgeDataUIModel>(
+                new GetterValueBinding<UINetItem>(
                     _eventsNamespaceKey,
                     _currentEdgeName,
-                    () => _networkEditorSystem.SelectedEntityDataUIModel));
+                    () => _networkEditorSystem.SelectedEdgeUIModel));
+            AddUpdateBinding(
+                new GetterValueBinding<bool>(
+                    _eventsNamespaceKey,
+                    _isConfigurationValidName,
+                    () => _networkEditorSystem.IsConfigurationValid));
         }
 
         /// <summary>
@@ -103,41 +115,18 @@
             }
         }
 
-        private void OnEdgeUpdated(EdgeDataUIModel updatedEdgeData)
+        private void OnEdgeUpdated(UINetItem updatedEdgeData)
         {
-            _log.Debug($"Current Edge updated with new data: {updatedEdgeData.ToJSONString()}");
+            _log.Info($"Current Edge updated with new data: {updatedEdgeData.ToJSONString()}");
 
             _networkEditorSystem.UpdateSelectedEdge(updatedEdgeData);
+        }
 
-            //_uiView.TriggerEvent("TEST_EVENT", new UIEdge
-            //{
-            //    CompositionFlags = new UICompositionFlags
-            //    {
-            //        General = updatedEdgeData.General.FlagsToDictionary(),
-            //        Left = updatedEdgeData.Left.FlagsToDictionary(),
-            //        Right = updatedEdgeData.Right.FlagsToDictionary(),
-            //    },
+        private void ApplyChanges()
+        {
+            _log.Info($"Applying changes to current Edge.");
 
-            //    StartNode = new UINode
-            //    {
-            //        CompositionFlags = new UICompositionFlags
-            //        {
-            //            General = CompositionFlags.General.Invert.FlagsToDictionary(),
-            //            Left = CompositionFlags.Side.Raised.FlagsToDictionary(),
-            //            Right = CompositionFlags.Side.Raised.FlagsToDictionary(),
-            //        },
-            //    },
-
-            //    EndNode = new UINode
-            //    {
-            //        CompositionFlags = new UICompositionFlags
-            //        {
-            //            General = CompositionFlags.General.Invert.FlagsToDictionary(),
-            //            Left = CompositionFlags.Side.Raised.FlagsToDictionary(),
-            //            Right = CompositionFlags.Side.Raised.FlagsToDictionary(),
-            //        },
-            //    },
-            //});
+            _networkEditorSystem.ApplyChanges();
         }
     }
 }

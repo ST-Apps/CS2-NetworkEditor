@@ -10,16 +10,13 @@
     using Game.Rendering;
     using Game.Tools;
     using NetworkEditor.Code.Extensions;
-    using NetworkEditor.Extensions;
     using NetworkEditor.Models;
-    using System.Diagnostics;
     using Unity.Collections;
     using Unity.Entities;
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEngine;
     using UnityEngine.InputSystem;
-    using UnityEngine.Rendering;
     using InputAction = UnityEngine.InputSystem.InputAction;
     using Node = Game.Net.Node;
 
@@ -34,6 +31,7 @@
         private ComponentLookup<NetGeometryData> _netGeometryDataLookup;
         private ComponentLookup<NetTerrainData> _netTerrainDataLookup;
         private BufferLookup<NetGeometryComposition> _netGeometryCompositionBufferLookup;
+        private BufferLookup<NetGeometryNodeState> _netGeometryNodeStatesBufferLookup;
         private BufferLookup<NetGeometrySection> _netGeometrySectionBufferLookup;
         private BufferLookup<NetSubSection> _netSubSectionBufferLookup;
         private BufferLookup<NetSectionPiece> _netSectionPiecesBufferLookup;
@@ -42,12 +40,11 @@
         // Raycast.
         private ControlPoint _raycastPoint;
         private Entity _selectedEdgeEntity = Entity.Null;
+        private PrefabRef _selectedEdgePrefab = default;
 
         // References.
         private ILog _log;
-        private OverlayRenderSystem _overlayRenderSystem;
         private OverlayRenderSystem.Buffer _overlayBuffer;
-        private ToolBaseSystem _previousActiveTool;
 
         // Input actions.
         private ProxyAction _applyAction;
@@ -68,9 +65,14 @@
         public bool HasSelectedEdgeEntity => _selectedEdgeEntity != Entity.Null;
 
         /// <summary>
-        /// Gets the <see cref="EdgeDataUIModel"/> for the currently selected <see cref="Edge"/> <see cref="Entity"/>.
+        /// Gets the <see cref="UIEdge"/> for the currently selected <see cref="Edge"/> <see cref="Entity"/>.
         /// </summary>
-        internal EdgeDataUIModel SelectedEntityDataUIModel { get; private set; }
+        internal UINetItem SelectedEdgeUIModel { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the current configuration for <see cref="SelectedEdgeUIModel"/> is valid.
+        /// </summary>
+        internal bool IsConfigurationValid { get; private set; }
 
         /// <summary>
         /// Called when the raycast is initialized.
@@ -101,15 +103,69 @@
         }
 
         /// <summary>
-        /// Updates <see cref="_selectedEdgeEntity"/> with the new data received as <see cref="EdgeDataUIModel"/>.
+        /// Applies the changes to the current selected Edge.
+        /// This applies only changes to <see cref="CompositionFlags"/>, everything else is updated in realtime.
+        /// </summary>
+        public void ApplyChanges()
+        {
+            // Checks if there is dirty data to update.
+            if (_isDirty)
+            {
+                // Checks if the selected object has all the needed components.
+                if (_edgeDataLookup.TryGetComponent(SelectedEdgeUIModel.Edge.Entity, out var edge) &&
+                    _prefabRefDataLookup.TryGetComponent(SelectedEdgeUIModel.Edge.Entity, out _selectedEdgePrefab) &&
+                    _netGeometryCompositionBufferLookup.TryGetBuffer(_selectedEdgePrefab.m_Prefab, out var netGeometryCompositionBuffer))
+                {
+                    // Finds a Composition that matches the up to date flags.
+                    var updatedEdgeCompositionFlags = new CompositionFlags
+                    {
+                        m_General = SelectedEdgeUIModel.Edge.CompositionFlags.General,
+                        m_Left = SelectedEdgeUIModel.Edge.CompositionFlags.Left,
+                        m_Right = SelectedEdgeUIModel.Edge.CompositionFlags.Right,
+                    };
+                    var updatedComposition = new Composition
+                    {
+                        m_Edge = FindComposition(netGeometryCompositionBuffer, updatedEdgeCompositionFlags),
+                        m_StartNode = FindComposition(netGeometryCompositionBuffer, new CompositionFlags
+                        {
+                            m_General = SelectedEdgeUIModel.StartNode.CompositionFlags.General,
+                            m_Left = SelectedEdgeUIModel.StartNode.CompositionFlags.Left,
+                            m_Right = SelectedEdgeUIModel.StartNode.CompositionFlags.Right,
+                        }),
+                        m_EndNode = FindComposition(netGeometryCompositionBuffer, new CompositionFlags
+                        {
+                            m_General = SelectedEdgeUIModel.EndNode.CompositionFlags.General,
+                            m_Left = SelectedEdgeUIModel.EndNode.CompositionFlags.Left,
+                            m_Right = SelectedEdgeUIModel.EndNode.CompositionFlags.Right,
+                        }),
+                    };
+
+                    // Checks for m_Edge being null on the updated Composition.
+                    // In that case, creates the new Composition for the Edge.
+                    if (updatedComposition.m_Edge == Entity.Null)
+                    {
+                        updatedComposition.m_Edge = CreateComposition(_selectedEdgePrefab, updatedEdgeCompositionFlags);
+                    }
+
+                    // Sets the new Composition for the current Edge.
+                    EntityManager.SetComponentData<Composition>(SelectedEdgeUIModel.Edge.Entity, updatedComposition);
+
+                    _isDirty = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates <see cref="_selectedEdgeEntity"/> with the new data received as <see cref="UINetItem"/>.
         /// </summary>
         /// <param name="updatedEdgeData"></param>
-        internal void UpdateSelectedEdge(EdgeDataUIModel updatedEdgeData)
+        internal void UpdateSelectedEdge(UINetItem updatedEdgeData)
         {
-            SelectedEntityDataUIModel = updatedEdgeData;
+            SelectedEdgeUIModel = updatedEdgeData;
+            IsConfigurationValid = ValidateFlags(_selectedEdgePrefab);
             _isDirty = true;
 
-            _log.Debug($"Updated Edge with {SelectedEntityDataUIModel.ToJSONString()}");
+            _log.Info($"Updated Edge with {SelectedEdgeUIModel.ToJSONString()}, configuration valid: {IsConfigurationValid}");
         }
 
         /// <summary>
@@ -123,7 +179,6 @@
             _log = Mod.Instance.Log;
 
             // Get system references.
-            _overlayRenderSystem = World.GetOrCreateSystemManaged<OverlayRenderSystem>();
             _overlayBuffer = World.GetOrCreateSystemManaged<OverlayRenderSystem>().GetBuffer(out var _);
 
             // Get lookup and barrier references.
@@ -136,6 +191,7 @@
             _netGeometryCompositionBufferLookup = GetBufferLookup<NetGeometryComposition>(false);
             _netTerrainDataLookup = GetComponentLookup<NetTerrainData>(false);
             _netGeometrySectionBufferLookup = GetBufferLookup<NetGeometrySection>(false);
+            _netGeometryNodeStatesBufferLookup = GetBufferLookup<NetGeometryNodeState>(false);
             _netSubSectionBufferLookup = GetBufferLookup<NetSubSection>(false);
             _netSectionPiecesBufferLookup = GetBufferLookup<NetSectionPiece>(false);
             _toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
@@ -152,79 +208,6 @@
         }
 
         /// <summary>
-        /// Method copied from <see cref="CompositionSelectSystem.CreateCompositionJob.CreateComposition"/>.
-        /// Adapted to use <see cref="EntityManager"/> rather than <see cref="EntityCommandBuffer"/>.
-        /// </summary>
-        /// <param name="prefab"></param>
-        /// <param name="mask"></param>
-        /// <returns></returns>
-        private Entity CreateComposition(Entity prefab, CompositionFlags mask)
-        {
-            var prefabGeometryData = _netGeometryDataLookup[prefab];
-            var prefabGeometrySections = _netGeometrySectionBufferLookup[prefab];
-            Entity entity;
-            if ((mask.m_General & CompositionFlags.General.Node) != (CompositionFlags.General)0U)
-            {
-                entity = EntityManager.CreateEntity(prefabGeometryData.m_NodeCompositionArchetype);
-            }
-            else
-            {
-                entity = EntityManager.CreateEntity(prefabGeometryData.m_EdgeCompositionArchetype);
-            }
-
-            if (EntityManager.TryGetBuffer<NetGeometryComposition>(entity, false, out var buffer))
-            {
-                buffer.Add(new NetGeometryComposition
-                {
-                    m_Composition = entity,
-                    m_Mask = mask,
-                });
-            }
-
-            EntityManager.SetComponentData(entity, new PrefabRef(prefab));
-            EntityManager.SetComponentData(entity, new NetCompositionData
-            {
-                m_Flags = mask,
-            });
-            var netCompositionPiecesBuffer = EntityManager.AddBuffer<NetCompositionPiece>(entity);
-            var netCompositionPiecesList = new NativeList<NetCompositionPiece>(32, Allocator.Temp);
-            NetCompositionHelpers.GetCompositionPieces(netCompositionPiecesList, prefabGeometrySections.AsNativeArray(), mask, _netSubSectionBufferLookup, _netSectionPiecesBufferLookup);
-            netCompositionPiecesBuffer.CopyFrom(netCompositionPiecesList.AsArray());
-            for (int i = 0; i < netCompositionPiecesList.Length; i++)
-            {
-                NetCompositionPiece netCompositionPiece = netCompositionPiecesList[i];
-                if (_netTerrainDataLookup.HasComponent(netCompositionPiece.m_Piece))
-                {
-                    EntityManager.AddComponentData(entity, default(TerrainComposition));
-                    break;
-                }
-            }
-
-            netCompositionPiecesList.Dispose();
-            return entity;
-        }
-
-        /// <summary>
-        /// Method copied from <see cref="CompositionSelectSystem.CreateCompositionJob.FindComposition"/>.
-        /// </summary>
-        /// <param name="geometryCompositions"></param>
-        /// <param name="flags"></param>
-        /// <returns><see cref="Entity.Null"/> if no <see cref="Composition"/> are matching.</returns>
-        private Entity FindComposition(DynamicBuffer<NetGeometryComposition> geometryCompositions, CompositionFlags flags)
-        {
-            for (int i = 0; i < geometryCompositions.Length; i++)
-            {
-                NetGeometryComposition netGeometryComposition = geometryCompositions[i];
-                if (netGeometryComposition.m_Mask == flags)
-                {
-                    return netGeometryComposition.m_Composition;
-                }
-            }
-
-            return Entity.Null;
-        }
-
-        /// <summary>
         /// Called every tool update.
         /// </summary>
         /// <param name="inputDeps">Input dependencies.</param>
@@ -237,56 +220,26 @@
                 SetHighlight(_raycastPoint, false);
                 _raycastPoint = default;
                 _selectedEdgeEntity = Entity.Null;
-                SelectedEntityDataUIModel = new EdgeDataUIModel();
+                SelectedEdgeUIModel = default;
                 _isApplying = false;
 
                 return inputDeps;
             }
 
-            // Checks if there is dirty data to update.
             if (_isDirty)
             {
-                // Checks if the selected object has all the needed components.
-                if (_edgeDataLookup.TryGetComponent(SelectedEntityDataUIModel.Edge, out var edge) &&
-                    _prefabRefDataLookup.TryGetComponent(SelectedEntityDataUIModel.Edge, out var prefabRef) &&
-                    _netGeometryCompositionBufferLookup.TryGetBuffer(prefabRef.m_Prefab, out var netGeometryCompositionBuffer) &&
-                    _compositionDataLookup.TryGetComponent(SelectedEntityDataUIModel.Edge, out var composition) &&
+                if (_compositionDataLookup.TryGetComponent(SelectedEdgeUIModel.Edge.Entity, out var composition) &&
                     _netCompositionDataLookup.TryGetComponent(composition.m_Edge, out var edgeComposition) &&
                     _netCompositionDataLookup.TryGetComponent(composition.m_StartNode, out var startNodeComposition) &&
                     _netCompositionDataLookup.TryGetComponent(composition.m_EndNode, out var endNodeComposition))
                 {
-                    // Creates the CommandBuffer that will execute updates.
-                    var commandBuffer = _toolOutputBarrier.CreateCommandBuffer();
+                    edgeComposition.m_Width = SelectedEdgeUIModel.Edge.Width;
+                    edgeComposition.m_MiddleOffset = SelectedEdgeUIModel.Edge.MiddleOffset;
+                    edgeComposition.m_WidthOffset = SelectedEdgeUIModel.Edge.WidthOffset;
+                    edgeComposition.m_NodeOffset = SelectedEdgeUIModel.Edge.NodeOffset;
 
-                    // Finds a Composition that matches the up to date flags.
-                    var updatedComposition = new Composition
-                    {
-                        m_Edge = FindComposition(netGeometryCompositionBuffer, new CompositionFlags
-                        {
-                            m_General = SelectedEntityDataUIModel.General,
-                            m_Left = SelectedEntityDataUIModel.Left,
-                            m_Right = SelectedEntityDataUIModel.Right,
-                        }),
-                        m_StartNode = FindComposition(netGeometryCompositionBuffer, startNodeComposition.m_Flags),
-                        m_EndNode = FindComposition(netGeometryCompositionBuffer, endNodeComposition.m_Flags),
-                    };
-
-                    // Checks for m_Edge being null on the updated Composition.
-                    // In that case, creates the new Composition for the Edge.
-                    if (updatedComposition.m_Edge == Entity.Null)
-                    {
-                        updatedComposition.m_Edge = CreateComposition(prefabRef, new CompositionFlags
-                        {
-                            m_General = SelectedEntityDataUIModel.General,
-                            m_Left = SelectedEntityDataUIModel.Left,
-                            m_Right = SelectedEntityDataUIModel.Right,
-                        });
-                    }
-
-                    // Sets the new Composition for the current Edge.
-                    commandBuffer.SetComponent<Composition>(SelectedEntityDataUIModel.Edge, updatedComposition);
-
-                    _isDirty = false;
+                    EntityManager.SetComponentData(composition.m_Edge, edgeComposition);
+                    EntityManager.AddComponent<Updated>(SelectedEdgeUIModel.Edge.Entity);
                 }
             }
 
@@ -318,14 +271,14 @@
                 {
                     _isApplying = true;
                     _selectedEdgeEntity = controlPoint.m_OriginalEntity;
-                    SelectedEntityDataUIModel = EdgeDataUIModel.FromEntity(
+                    SelectedEdgeUIModel = UINetItem.FromEntity(
                         _selectedEdgeEntity,
                         _edgeDataLookup,
                         _compositionDataLookup,
                         _netCompositionDataLookup);
 
                     _log.Info($"Selected edge: {_selectedEdgeEntity.ToJSONString()}");
-                    _log.Info($"Selected model: {SelectedEntityDataUIModel.ToJSONString()}");
+                    _log.Info($"Selected model: {SelectedEdgeUIModel.ToJSONString()}");
                 }
             }
             else
@@ -334,7 +287,7 @@
                 SetHighlight(_raycastPoint, false);
                 _raycastPoint = default;
                 _selectedEdgeEntity = Entity.Null;
-                SelectedEntityDataUIModel = new EdgeDataUIModel();
+                SelectedEdgeUIModel = default;
                 _isApplying = false;
             }
 
@@ -425,6 +378,117 @@
                 EntityManager.RemoveComponent<Highlighted>(controlPoint.m_OriginalEntity);
                 EntityManager.AddComponent<BatchesUpdated>(controlPoint.m_OriginalEntity);
             }
+        }
+
+        /// <summary>
+        /// Method copied from <see cref="CompositionSelectSystem.CreateCompositionJob.CreateComposition"/>.
+        /// Adapted to use <see cref="EntityManager"/> rather than <see cref="EntityCommandBuffer"/>.
+        /// </summary>
+        /// <param name="prefab"></param>
+        /// <param name="mask"></param>
+        /// <returns></returns>
+        private Entity CreateComposition(Entity prefab, CompositionFlags mask)
+        {
+            var prefabGeometryData = _netGeometryDataLookup[prefab];
+            var prefabGeometrySections = _netGeometrySectionBufferLookup[prefab];
+            Entity entity;
+            if ((mask.m_General & CompositionFlags.General.Node) != (CompositionFlags.General)0U)
+            {
+                entity = EntityManager.CreateEntity(prefabGeometryData.m_NodeCompositionArchetype);
+            }
+            else
+            {
+                entity = EntityManager.CreateEntity(prefabGeometryData.m_EdgeCompositionArchetype);
+            }
+
+            if (EntityManager.TryGetBuffer<NetGeometryComposition>(entity, false, out var buffer))
+            {
+                buffer.Add(new NetGeometryComposition
+                {
+                    m_Composition = entity,
+                    m_Mask = mask,
+                });
+            }
+
+            EntityManager.SetComponentData(entity, new PrefabRef(prefab));
+            EntityManager.SetComponentData(entity, new NetCompositionData
+            {
+                m_Flags = mask,
+            });
+            var netCompositionPiecesBuffer = EntityManager.AddBuffer<NetCompositionPiece>(entity);
+            var netCompositionPiecesList = new NativeList<NetCompositionPiece>(32, Allocator.Temp);
+            NetCompositionHelpers.GetCompositionPieces(netCompositionPiecesList, prefabGeometrySections.AsNativeArray(), mask, _netSubSectionBufferLookup, _netSectionPiecesBufferLookup);
+            netCompositionPiecesBuffer.CopyFrom(netCompositionPiecesList.AsArray());
+            for (int i = 0; i < netCompositionPiecesList.Length; i++)
+            {
+                NetCompositionPiece netCompositionPiece = netCompositionPiecesList[i];
+                if (_netTerrainDataLookup.HasComponent(netCompositionPiece.m_Piece))
+                {
+                    EntityManager.AddComponentData(entity, default(TerrainComposition));
+                    break;
+                }
+            }
+
+            netCompositionPiecesList.Dispose();
+            return entity;
+        }
+
+        /// <summary>
+        /// Method copied from <see cref="CompositionSelectSystem.CreateCompositionJob.FindComposition"/>.
+        /// </summary>
+        /// <param name="geometryCompositions"></param>
+        /// <param name="flags"></param>
+        /// <returns><see cref="Entity.Null"/> if no <see cref="Composition"/> are matching.</returns>
+        private Entity FindComposition(DynamicBuffer<NetGeometryComposition> geometryCompositions, CompositionFlags flags)
+        {
+            for (int i = 0; i < geometryCompositions.Length; i++)
+            {
+                NetGeometryComposition netGeometryComposition = geometryCompositions[i];
+                if (netGeometryComposition.m_Mask == flags)
+                {
+                    return netGeometryComposition.m_Composition;
+                }
+            }
+
+            return Entity.Null;
+        }
+
+        /// <summary>
+        /// Checks if the combination of provided <see cref="CompositionFlags"/> is valid for the given <see cref="PrefabRef"/>.
+        /// </summary>
+        /// <param name="prefabRef"></param>
+        /// <param name="flags"></param>
+        /// <returns></returns>
+        private bool ValidateFlags(PrefabRef prefabRef)
+        {
+            if (!_netGeometryNodeStatesBufferLookup.TryGetBuffer(prefabRef, out var netGeometryNodeStates))
+            {
+                _log.Debug($"Failed extracting NetGeometryNodeState for Prefab: {prefabRef.ToJSONString()}");
+                return false;
+            }
+
+            // Generates the flags that must be validated.
+            var flags = new CompositionFlags
+            {
+                m_General = SelectedEdgeUIModel.Edge.CompositionFlags.General,
+                m_Left = SelectedEdgeUIModel.Edge.CompositionFlags.Left,
+                m_Right = SelectedEdgeUIModel.Edge.CompositionFlags.Right,
+            };
+
+            // Validates the flags on all the states for the current Prefab.
+            for (int i = 0; i < netGeometryNodeStates.Length; i++)
+            {
+                var netGeometryNodeState = netGeometryNodeStates[i];
+
+                if (!NetCompositionHelpers.TestEdgeFlags(netGeometryNodeState, flags))
+                {
+                    _log.Info($"Failed matching flags, configuration might be invalid.");
+                    return false;
+                }
+            }
+
+            _log.Info($"Flags are matching, configuration might be valid.");
+            return true;
         }
     }
 }

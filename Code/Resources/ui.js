@@ -2382,9 +2382,9 @@
           if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
             __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
           }
-          var React7 = require_react();
+          var React14 = require_react();
           var Scheduler = require_scheduler();
-          var ReactSharedInternals = React7.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React14.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           var suppressWarning = false;
           function setSuppressWarning(newSuppressWarning) {
             {
@@ -3989,7 +3989,7 @@
             {
               if (props.value == null) {
                 if (typeof props.children === "object" && props.children !== null) {
-                  React7.Children.forEach(props.children, function(child) {
+                  React14.Children.forEach(props.children, function(child) {
                     if (child == null) {
                       return;
                     }
@@ -12436,7 +12436,7 @@
             }
           }
           var fakeInternalInstance = {};
-          var emptyRefsObject = new React7.Component().refs;
+          var emptyRefsObject = new React14.Component().refs;
           var didWarnAboutStateAssignmentForComponent;
           var didWarnAboutUninitializedState;
           var didWarnAboutGetSnapshotBeforeUpdateWithoutDidUpdate;
@@ -23508,7 +23508,7 @@
   });
 
   // src/ui.jsx
-  var import_react6 = __toESM(require_react());
+  var import_react13 = __toESM(require_react());
 
   // node_modules/hookui-framework/src/components/panel.jsx
   var import_react = __toESM(require_react());
@@ -23682,7 +23682,7 @@
   // src/components/_select.jsx
   var import_react5 = __toESM(require_react());
   var import_react_dom = __toESM(require_react_dom());
-  var $Select = ({ react, style, onToggle, section, options }) => {
+  var $Select = ({ react, style, onToggle, options }) => {
     const [active, setActive] = react.useState(false);
     const [portalContainer, setPortalContainer] = react.useState(null);
     const pickerRef = react.useRef(null);
@@ -23762,7 +23762,7 @@
             react,
             label: option,
             checked: options[option],
-            onToggle: onToggle(section, option)
+            onToggle: onToggle(option)
           }
         )))
       )
@@ -23772,43 +23772,178 @@
   };
   var select_default = $Select;
 
+  // src/components/_icon-panel.jsx
+  var import_react10 = __toESM(require_react());
+
+  // src/components/_section.jsx
+  var import_react6 = __toESM(require_react());
+  var $Section = ({ children, style, contentStyle, isList }) => {
+    const classNames = "section_sop section_gUk" + (isList ? "list-section_BJP" : "statistics-menu_y86");
+    return /* @__PURE__ */ import_react6.default.createElement("div", { className: classNames, style: { width: "auto", height: "auto", overflowY: "visible", ...style } }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "content_flM content_owQ first_l25 last_ZNw", style: contentStyle }, children));
+  };
+  var section_default = $Section;
+
+  // src/components/_paragraph.jsx
+  var import_react7 = __toESM(require_react());
+  var $Paragraph = ({ children, style }) => {
+    return /* @__PURE__ */ import_react7.default.createElement("p", { cohinline: "cohinline", style }, children);
+  };
+  var paragraph_default = $Paragraph;
+
+  // src/components/_description.jsx
+  var import_react8 = __toESM(require_react());
+  var $Description = ({ style, children }) => {
+    return /* @__PURE__ */ import_react8.default.createElement("div", { className: "description_VWf", style: { padding: "20rem", ...style } }, /* @__PURE__ */ import_react8.default.createElement("div", { className: "paragraphs_nbD" }, children));
+  };
+  var description_default = $Description;
+
+  // src/components/_label.jsx
+  var import_react9 = __toESM(require_react());
+  var $Label = ({ children, style, isBold }) => {
+    var markup = isBold ? /* @__PURE__ */ import_react9.default.createElement("b", null, children) : children;
+    return /* @__PURE__ */ import_react9.default.createElement("div", { className: "label_VSW label_T__", styles: style }, markup);
+  };
+  var label_default = $Label;
+
+  // src/components/_icon-panel.jsx
+  var $IconPanel = ({ label, description, icon, fitChild, children, style }) => {
+    const conditionalInsert = !fitChild ? /* @__PURE__ */ import_react10.default.createElement("div", { style: { display: "flex", width: "75rem", justifyContent: "center" } }, children) : "";
+    const conditionalInsert2 = fitChild ? /* @__PURE__ */ import_react10.default.createElement("div", { style: { display: "flex", width: "100%", justifyContent: "center" } }, children) : "";
+    return /* @__PURE__ */ import_react10.default.createElement(section_default, { style: { marginBottom: "10rem", ...style } }, /* @__PURE__ */ import_react10.default.createElement("div", { style: { display: "flex", flexDirection: "row" } }, /* @__PURE__ */ import_react10.default.createElement("div", { style: { display: "flex", width: "75rem", justifyContent: "center" } }, /* @__PURE__ */ import_react10.default.createElement("img", { style: { alignSelf: "center", margin: "10rem", maxWidth: "55rem", maxHeight: "55rem" }, src: icon })), /* @__PURE__ */ import_react10.default.createElement("div", { style: { flex: 1, marginTop: "10rem", marginBottom: "10rem" } }, /* @__PURE__ */ import_react10.default.createElement(label_default, { isBold: "true" }, label), /* @__PURE__ */ import_react10.default.createElement(description_default, { style: { padding: "0" } }, /* @__PURE__ */ import_react10.default.createElement(paragraph_default, { style: { fontWeight: "bold", color: "var(--accentColorLight)" } }, description))), conditionalInsert), conditionalInsert2);
+  };
+  var icon_panel_default = $IconPanel;
+
+  // src/components/_button.jsx
+  var import_react11 = __toESM(require_react());
+  var $Button = ({ children, style, onClick, isBlack }) => {
+    const className = isBlack ? "button_KVN" : "button_WWa";
+    const inlineStyle = isBlack ? { color: "var(--textColor)" } : {};
+    return /* @__PURE__ */ import_react11.default.createElement("div", null, /* @__PURE__ */ import_react11.default.createElement("button", { className, style: { width: "100%", height: "auto", padding: "10rem", ...inlineStyle, ...style }, onClick }, children));
+  };
+  var button_default2 = $Button;
+
+  // src/components/_slider.jsx
+  var import_react12 = __toESM(require_react());
+  var $Slider = ({ react, value, onValueChanged, style }) => {
+    const sliderRef = react.useRef(null);
+    const handleSliderClick = (e) => {
+      const slider = sliderRef.current;
+      if (!slider)
+        return;
+      const rect = slider.getBoundingClientRect();
+      const clickedPosition = e.clientX - rect.left;
+      let newValue = clickedPosition / rect.width * 100;
+      newValue = Math.round(newValue / 5) * 5;
+      newValue = parseInt(newValue, 10);
+      if (newValue < 0)
+        newValue = 0;
+      else if (newValue > 100)
+        newValue = 100;
+      if (onValueChanged)
+        onValueChanged(parseInt(newValue, 10));
+    };
+    const valuePercent = value + "%";
+    return /* @__PURE__ */ import_react12.default.createElement("div", { style: { width: "100%", ...style } }, /* @__PURE__ */ import_react12.default.createElement("div", { style: { display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", margin: "10rem", marginTop: "0" } }, /* @__PURE__ */ import_react12.default.createElement("div", { className: "value_jjh", style: { display: "flex", width: "45rem", alignItems: "center", justifyContent: "center" } }, valuePercent), /* @__PURE__ */ import_react12.default.createElement(
+      "div",
+      {
+        className: "slider_fKm slider_pUS horizontal slider_KjX",
+        style: {
+          flex: 1,
+          margin: "10rem"
+        },
+        ref: sliderRef,
+        onClick: handleSliderClick
+      },
+      /* @__PURE__ */ import_react12.default.createElement("div", { className: "track-bounds_H8_" }, /* @__PURE__ */ import_react12.default.createElement("div", { className: "range-bounds_lNt", style: { width: valuePercent } }, /* @__PURE__ */ import_react12.default.createElement("div", { className: "range_KXa range_iUN" })))
+    )));
+  };
+  var slider_default = $Slider;
+
   // src/ui.jsx
   var eventsNamespaceKey = "NetworkEditor";
   var eventEdgeUpdatedKey = `${eventsNamespaceKey}.EdgeUpdated`;
   var currentEdgeKey = `${eventsNamespaceKey}.CurrentEdge`;
+  var applyChangesKey = `${eventsNamespaceKey}.ApplyChanges`;
+  var isConfigurationValidKey = `${eventsNamespaceKey}.ConfigurationValid`;
   var $Editor = ({ react }) => {
     const [data, setData] = react.useState({
-      "Edge": {},
-      "General": {},
-      "Left": {},
-      "Right": {}
+      "edge": {
+        "entity": {},
+        "flags": {
+          "general": {},
+          "left": {},
+          "right": {}
+        }
+      },
+      "startNode": {
+        "entity": {},
+        "flags": {
+          "general": {},
+          "left": {},
+          "right": {}
+        }
+      },
+      "endNode": {
+        "entity": {},
+        "flags": {
+          "general": {},
+          "left": {},
+          "right": {}
+        }
+      }
     });
-    const handleCheckboxChange = (section, flag) => (event) => {
-      console.log(`Setting data[${section}][${flag}] to ${event}`);
-      data[section][flag] = event;
+    use_data_update_default(react, currentEdgeKey, setData);
+    const [configurationValid, setConfigurationValid] = react.useState(true);
+    use_data_update_default(react, isConfigurationValidKey, setConfigurationValid);
+    const handleCheckboxChange = (type, section, flag) => (event) => {
+      console.log(`Setting data[${type}].flags[${section}][${flag}] to ${event}`);
+      data[type].flags[section][flag] = event;
       engine.trigger(eventEdgeUpdatedKey, data);
-      setData({
-        ...data,
-        [section]: {
-          ...data[section],
-          [flag]: event
+      setData((prevData) => ({
+        ...prevData,
+        [type]: {
+          ...prevData[type],
+          flags: {
+            ...prevData[type].flags,
+            [section]: {
+              ...prevData[type].flags[section],
+              [flag]: event
+            }
+          }
         }
-      });
+      }));
     };
-    const renderCheckboxes = (section) => {
-      return /* @__PURE__ */ import_react6.default.createElement(
-        select_default,
+    const renderCheckboxes = (type, section) => {
+      const editingText = `Editing ${type}->${section}`;
+      const editingDescription = `Toggle any flag to update your ${type}.`;
+      return /* @__PURE__ */ import_react13.default.createElement(
+        icon_panel_default,
         {
-          react,
-          section,
-          options: data[section],
-          style: { margin: "10rem", flex: "1" },
-          onToggle: (sec, flag) => handleCheckboxChange(sec, flag)
-        }
+          label: editingText,
+          description: editingDescription,
+          icon: "Media/Editor/Edit.svg",
+          fitChild: "true"
+        },
+        /* @__PURE__ */ import_react13.default.createElement(
+          select_default,
+          {
+            react,
+            options: data[type].flags[section],
+            style: { margin: "10rem", flex: "1" },
+            onToggle: (flag) => handleCheckboxChange(type, section, flag)
+          }
+        )
       );
     };
-    use_data_update_default(react, currentEdgeKey, setData);
-    return /* @__PURE__ */ import_react6.default.createElement(panel_default, { react, title: "Network Editor" }, /* @__PURE__ */ import_react6.default.createElement("div", null, "Editing Edge: ", data.Edge.index), /* @__PURE__ */ import_react6.default.createElement("div", null, /* @__PURE__ */ import_react6.default.createElement("h3", null, "General"), renderCheckboxes("General"), /* @__PURE__ */ import_react6.default.createElement("h3", null, "Left"), renderCheckboxes("Left"), /* @__PURE__ */ import_react6.default.createElement("h3", null, "Right"), renderCheckboxes("Right")));
+    const applyChanges = () => {
+      engine.trigger(applyChangesKey);
+    };
+    const handleSliderChanged = (propertyName, value) => {
+      console.log(`Setting data['edge'][${propertyName}] to ${value}`);
+      data["edge"][propertyName] = value;
+      engine.trigger(eventEdgeUpdatedKey, data);
+    };
+    return /* @__PURE__ */ import_react13.default.createElement(panel_default, { react, title: "Network Editor" }, /* @__PURE__ */ import_react13.default.createElement("div", null, renderCheckboxes("edge", "general"), renderCheckboxes("edge", "left"), renderCheckboxes("edge", "right"), /* @__PURE__ */ import_react13.default.createElement(slider_default, { react, value: data["edge"].width, onValueChanged: (val) => handleSliderChanged("width", val) }), /* @__PURE__ */ import_react13.default.createElement(slider_default, { react, value: data["edge"].middleOffset, onValueChanged: (val) => handleSliderChanged("middleOffset", val) }), /* @__PURE__ */ import_react13.default.createElement(slider_default, { react, value: data["edge"].widthOffset, onValueChanged: (val) => handleSliderChanged("widthOffset", val) }), /* @__PURE__ */ import_react13.default.createElement(slider_default, { react, value: data["edge"].nodeOffset, onValueChanged: (val) => handleSliderChanged("nodeOffset", val) })), /* @__PURE__ */ import_react13.default.createElement("div", null, /* @__PURE__ */ import_react13.default.createElement(button_default2, { style: { marginTop: "5rem" } }, "Reset"), /* @__PURE__ */ import_react13.default.createElement(button_default2, { style: { marginTop: "5rem" }, onClick: applyChanges }, "Apply")));
   };
   var injectionPoint = document.getElementsByClassName("game-main-screen_TRK")[0];
   var newDiv = document.createElement("div");
@@ -23816,7 +23951,7 @@
   newDiv.id = "network-editor-root";
   injectionPoint.appendChild(newDiv);
   var root = (0, import_client.createRoot)(newDiv);
-  root.render((0, import_react_dom2.createPortal)(/* @__PURE__ */ import_react6.default.createElement($Editor, { react: import_react6.default }), newDiv));
+  root.render((0, import_react_dom2.createPortal)(/* @__PURE__ */ import_react13.default.createElement($Editor, { react: import_react13.default }), newDiv));
 })();
 /*! Bundled license information:
 

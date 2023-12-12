@@ -1,126 +1,122 @@
-//import React from 'react';
-//import { useDataUpdate } from 'hookui-framework';
-//import $TabWindow from './components/_tab-window';
-//import $Settings from './tabs/_settings';
-//import $ZoneColours from './tabs/_zone-colours';
-//import $ZoneSettings from './tabs/_zone-settings';
-//import $About from './tabs/_about';
-
-//const $LegacyFlavour = ({ react }) => {
-
-//    const [data, setData] = react.useState({})
-
-//    useDataUpdate(react, "cities2modding_legacyflavour.config", setData)
-
-//    const triggerUpdate = (prop, val) => {
-//        engine.trigger("cities2modding_legacyflavour.updateProperty", JSON.stringify({ property: prop, value: val }) );
-//    };
-
-//    const toggleVisibility = () => {        
-//        const data = { type: "toggle_visibility", id: "cities2modding.legacyflavour" };
-//        const event = new CustomEvent('hookui', { detail: data });
-//        window.dispatchEvent(event);
-//    }
-
-//    const tabs = [
-//        {
-//            name: 'Settings',
-//            content: <div style={{ display: 'flex', width: '100%' }}>
-//                <$Settings react={react} data={data} triggerUpdate={triggerUpdate} />
-//            </div>
-//        },
-//        {
-//            name: 'Zone Settings',
-//            content: <div style={{ height: '100%', width: '100%' }}>
-//                <$ZoneSettings react={react} data={data} triggerUpdate={triggerUpdate} />
-//            </div>
-//        },
-//        {
-//            name: 'Zone Colours',
-//            content: <div style={{ height: '100%', width: '100%' }}>
-//                <$ZoneColours react={react} data={data} triggerUpdate={triggerUpdate} />
-//            </div>
-//        },
-//        {
-//            name: 'About',
-//            content: <div style={{ height: '100%', width: '100%' }}>
-//                <$About />
-//            </div>
-//        }
-//    ];
-
-//    return <$TabWindow react={react} tabs={tabs} onClose={toggleVisibility} />
-//};
-
-//// Registering the panel with HookUI
-//window._$hookui.registerPanel({
-//    id: "cities2modding.legacyflavour",
-//    name: "Legacy Flavour",
-//    icon: "Media/Game/Icons/GenericVehicle.svg",
-//    component: $LegacyFlavour
-//});
-
 import React from 'react';
 import { useDataUpdate, $Panel, $Field } from 'hookui-framework'
 import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import $Select from './components/_select';
+import $IconPanel from './components/_icon-panel';
+import $Button from './components/_button';
+import $Slider from './components/_slider';
 
 const eventsNamespaceKey = "NetworkEditor";
 const eventEdgeUpdatedKey = `${eventsNamespaceKey}.EdgeUpdated`;
 const currentEdgeKey = `${eventsNamespaceKey}.CurrentEdge`;
+const applyChangesKey = `${eventsNamespaceKey}.ApplyChanges`;
+const isConfigurationValidKey = `${eventsNamespaceKey}.ConfigurationValid`;
 
 const $Editor = ({ react }) => {
-    // This sets up the currentControlPoint as local state
     const [data, setData] = react.useState({
-        "Edge": {},
-        "General": {},
-        "Left": {},
-        "Right": {}
+        "edge": {
+            "entity": {},
+            "flags": {
+                "general": {},
+                "left": {},
+                "right": {}
+            },
+        },
+        "startNode": {
+            "entity": {},
+            "flags": {
+                "general": {},
+                "left": {},
+                "right": {}
+            }
+        },
+        "endNode": {
+            "entity": {},
+            "flags": {
+                "general": {},
+                "left": {},
+                "right": {}
+            }
+        }
     });
+    useDataUpdate(react, currentEdgeKey, setData)
 
-    //engine.on('TEST_EVENT', (uiEdge) => {
-    //    console.log(uiEdge);
-    //});
+    const [configurationValid, setConfigurationValid] = react.useState(true);
+    useDataUpdate(react, isConfigurationValidKey, setConfigurationValid);
 
-    const handleCheckboxChange = (section, flag) => (event) => {
-        console.log(`Setting data[${section}][${flag}] to ${event}`)
-        data[section][flag] = event;
+    const handleCheckboxChange = (type, section, flag) => (event) => {
+        console.log(`Setting data[${type}].flags[${section}][${flag}] to ${event}`)
+        data[type].flags[section][flag] = event;
         engine.trigger(eventEdgeUpdatedKey, data);
 
-        setData({
-            ...data,
-            [section]: {
-                ...data[section],
-                [flag]: event
+        setData(prevData => ({
+            ...prevData,
+            [type]: {
+                ...prevData[type],
+                flags: {
+                    ...prevData[type].flags,
+                    [section]: {
+                        ...prevData[type].flags[section],
+                        [flag]: event
+                    }
+                }
             }
-        });
-    }
+        }));
+    };
 
-    const renderCheckboxes = (section) => {
+    const renderCheckboxes = (type, section) => {
+        const editingText = `Editing ${type}->${section}`;
+        const editingDescription = `Toggle any flag to update your ${type}.`;
+
         return (
-            <$Select react={react}
-                section={section}
-                options={data[section]}
-                style={{ margin: '10rem', flex: '1' }}
-                onToggle={(sec, flag) => handleCheckboxChange(sec, flag)}>
-            </$Select>
+            <$IconPanel label={editingText}
+                description={editingDescription}
+                icon="Media/Editor/Edit.svg" fitChild="true">
+                <$Select react={react}
+                    options={data[type].flags[section]}
+                    style={{ margin: '10rem', flex: '1' }}
+                    onToggle={(flag) => handleCheckboxChange(type, section, flag)}>
+                </$Select>
+            </$IconPanel>
         );
     };
 
-    // useDataUpdate binds the result of the GetterValueBinding to currentControlPoint
-    useDataUpdate(react, currentEdgeKey, setData)
+    const applyChanges = () => {
+        engine.trigger(applyChangesKey);
+    }
+
+    const handleSliderChanged = (propertyName, value) => {
+        console.log(`Setting data['edge'][${propertyName}] to ${value}`)
+        data['edge'][propertyName] = value;
+
+        engine.trigger(eventEdgeUpdatedKey, data);
+    }
 
     return <$Panel react={react} title="Network Editor">
-        <div>Editing Edge: {data.Edge.index}</div>
         <div>
-            <h3>General</h3>
-            {renderCheckboxes('General')}
-            <h3>Left</h3>
-            {renderCheckboxes('Left')}
-            <h3>Right</h3>
-            {renderCheckboxes('Right')}
+            {renderCheckboxes('edge', 'general')}
+            {renderCheckboxes('edge', 'left')}
+            {renderCheckboxes('edge', 'right')}
+            <$Slider react={react} value={data['edge'].width} onValueChanged={(val) => handleSliderChanged('width', val)} />
+            <$Slider react={react} value={data['edge'].middleOffset} onValueChanged={(val) => handleSliderChanged('middleOffset', val)} />
+            <$Slider react={react} value={data['edge'].widthOffset} onValueChanged={(val) => handleSliderChanged('widthOffset', val)} />
+            <$Slider react={react} value={data['edge'].nodeOffset} onValueChanged={(val) => handleSliderChanged('nodeOffset', val)} />
         </div>
+        <div>
+            <$Button style={{ marginTop: '5rem' }}>Reset</$Button>
+            <$Button style={{ marginTop: '5rem' }} onClick={applyChanges}>Apply</$Button>
+        </div>
+        {/*<div>*/}
+        {/*    {renderCheckboxes('startNode', 'general')}*/}
+        {/*    {renderCheckboxes('startNode', 'left')}*/}
+        {/*    {renderCheckboxes('startNode', 'right')}*/}
+        {/*</div>*/}
+        {/*<div>*/}
+        {/*    {renderCheckboxes('endNode', 'general')}*/}
+        {/*    {renderCheckboxes('endNode', 'left')}*/}
+        {/*    {renderCheckboxes('endNode', 'right')}*/}
+        {/*</div>*/}
     </$Panel>
 }
 

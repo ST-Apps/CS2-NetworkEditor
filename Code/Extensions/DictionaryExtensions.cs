@@ -3,9 +3,9 @@
     using System;
     using System.Collections.Generic;
 
-    internal static class EnumExtensions
+    internal static class DictionaryExtensions
     {
-        public static Dictionary<string, bool> ToDictionary<TEnum>(this TEnum enumValue)
+        public static TEnum ToFlags<TEnum>(this Dictionary<string, bool> dictionary)
             where TEnum : struct, Enum
         {
             var enumType = typeof(TEnum);
@@ -14,17 +14,16 @@
                 throw new ArgumentException("The generic type parameter must be an enum with the [Flags] attribute.");
             }
 
-            var result = new Dictionary<string, bool>();
-            foreach (var value in Enum.GetValues(enumType))
+            int result = 0;
+            foreach (var item in dictionary)
             {
-                var enumName = Enum.GetName(enumType, value);
-                if (enumName != null)
+                if (item.Value && Enum.TryParse<TEnum>(item.Key, out var enumValue))
                 {
-                    result[enumName] = enumValue.HasFlag((Enum)value);
+                    result |= Convert.ToInt32(enumValue);
                 }
             }
 
-            return result;
+            return (TEnum)Enum.ToObject(enumType, result);
         }
     }
 }

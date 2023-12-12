@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom';
 import { $Field } from 'hookui-framework'
 
-const $Select = ({ react, style, onToggle, section, options }) => {
+const $Select = ({ react, style, onToggle, options }) => {
     const [active, setActive] = react.useState(false);
     const [portalContainer, setPortalContainer] = react.useState(null);
     const pickerRef = react.useRef(null);
@@ -84,7 +84,7 @@ const $Select = ({ react, style, onToggle, section, options }) => {
                                 react={react}
                                 label={option}
                                 checked={options[option]}
-                                onToggle={onToggle(section, option)} />
+                                onToggle={onToggle(option)} />
                         </div>
                     ))}
                 </div>
